@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Game</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+    height: auto;
+    margin: 0 auto;
+    background: #ffffff;
+    background-image: linear-gradient(rgba(0, 0, 0, 0.1) .1em, transparent .1em), linear-gradient(90deg, rgba(0, 0, 0, 0.1) .1em, transparent .1em);
+    background-size: 2em 2em;
+  }
+  .navbar {
+    background-color: #333;
+    overflow: hidden;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .navbar a {
+    float: left;
+    display: block;
+    color: #f2f2f2;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+  }
+
+  .navbar a:hover {
+    background-color: #ddd;
+    color: black;
+  }
+
+  .game-container {
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 50px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+  @media only screen and (max-width: 600px) {
+    .game-container {
+    display: flex;
+    margin-top: 100px;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+  .instructions {
+    flex: 1;
+    text-align: left;
+    padding: 20px;
+    box-sizing: border-box;
+    background-color: #474747;
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .instructions h2 {
+    color: #3498db;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    font-size: 24px;
+  }
+
+  .instructions p {
+    color: #eee8e8;
+    line-height: 1.6;
+  }
+
+  .instructions p:first-of-type {
+    margin-top: 10px;
+  }
+
+  .instructions p:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .instructions a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .instructions a:hover {
+    text-decoration: underline;
+  }
+
+  .game {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .container {
+    display: grid;
+    grid-template-columns: repeat(4, 100px);
+    grid-template-rows: repeat(4, 100px);
+    gap: 10px;
+    perspective: 1000px;
+  }
+
+  .block {
+    width: 100px;
+    height: 100px;
+    background-color: #3498db;
+    cursor: pointer;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+
+  .block:hover {
+    transform: scale(1.1);
+  }
+
+  #score, #lives {
+    margin-top: 20px;
+    font-size: 24px;
+    color: white;
+  }
+
+  #restart {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    display: none;
+    transition: transform 0.3s ease;
+  }
+
+  #restart:hover {
+    transform: scale(1.1);
+  }
+
+  #start {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: transform 0.3s ease;
+  }
+
+  #start:hover {
+    transform: scale(1.1);
+  }
+
+  .heart {
+    color: red;
+  }
+
+  h1 {
+    font-size: 36px;
+    color: #2c3e50;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  .footer{
+    background-color:#333;
+    height: 3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center ;
+    color: white;
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+  <div class="navbar">
+    <a href="#">Memory Game</a>
+  </div>
+<div class="game-container">
+  <div class="instructions">
+    <h2>Instructions:</h2>
+    <p>Click on the blocks to match the highlighted pattern. Each correct click earns you a point. Be careful! Clicking on the wrong block will cost you a life. You have 3 ❤️ . Good luck!</p>
+    <button id="start">Start Game</button>
+    <button id="restart">Restart Game</button>
+    <div id="score">Score: <span id="scoreValue">0</span></div>
+    <span id="livesValue">❤️ ❤️ ❤️</span>
+  </div>
+
+  <div class="game">
+    <h1>Memory Game</h1>
+    <div class="container"></div>
+  </div>
+</div>
+
+
+<script>
+  const container = document.querySelector('.container');
+  const scoreDisplay = document.getElementById('scoreValue');
+  const livesDisplay = document.getElementById('livesValue');
+  const restartButton = document.getElementById('restart');
+  const startButton = document.getElementById('start');
+  const totalBlocks = 16;
+  let highlightedBlocks = [];
+  let score = 0;
+  let lives = 3;
+  let gameStarted = false;
+
+  function createBlocks() {
+    for (let i = 0; i < totalBlocks; i++) {
+      const block = document.createElement('div');
+      block.classList.add('block');
+      block.addEventListener('click', handleBlockClick);
+      container.appendChild(block);
+    }
+  }
+
+  function highlightBlocks() {
+    highlightedBlocks = [];
+    for (let i = 0; i < 4; i++) {
+      const randomIndex = Math.floor(Math.random() * totalBlocks);
+      highlightedBlocks.push(randomIndex);
+    }
+
+    highlightedBlocks.forEach(index => {
+      const block = container.children[index];
+      block.style.backgroundColor = '#e74c3c';
+    });
+
+    setTimeout(() => {
+      highlightedBlocks.forEach(index => {
+        const block = container.children[index];
+        block.style.backgroundColor = '#3498db';
+      });
+      gameStarted = true;
+    }, 1000);
+  }
+
+  function handleBlockClick(event) {
+    if (!gameStarted) return;
+
+    const clickedIndex = Array.from(container.children).indexOf(event.target);
+
+    if (highlightedBlocks.includes(clickedIndex)) {
+      const index = highlightedBlocks.indexOf(clickedIndex);
+      highlightedBlocks.splice(index, 1);
+
+      score++;
+      scoreDisplay.textContent = score;
+
+      if (highlightedBlocks.length === 0) {
+        highlightBlocks();
+      }
+    } else {
+      lives--;
+      updateLivesDisplay();
+      if (lives === 0) {
+        endGame();
+      }
+    }
+  }
+
+  function updateLivesDisplay() {
+    let hearts = '';
+    for (let i = 0; i < lives; i++) {
+      hearts += '❤️ ';
+    }
+    livesDisplay.innerHTML = hearts;
+  }
+
+  function endGame() {
+    restartButton.style.display = 'block';
+    gameStarted = false;
+  }
+
+  restartButton.addEventListener('click', () => {
+    score = 0;
+    lives = 3;
+    scoreDisplay.textContent = score;
+    updateLivesDisplay();
+    restartButton.style.display = 'none';
+    highlightedBlocks = [];
+    container.innerHTML = '';
+    createBlocks();
+    highlightBlocks();
+  });
+
+  startButton.addEventListener('click', () => {
+    startButton.style.display = 'none';
+    createBlocks();
+    highlightBlocks();
+  });
+</script>
+</body>
+<footer class="footer">
+  <p href="#">© 2024 Memory game | This template is made with ❤️ by Rushikesh</>
+</footer>
+</html>
